@@ -1,0 +1,22 @@
+from transformers import pipeline
+from transformers import AutoTokenizer
+import torch
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+from transformers import AutoModelForCausalLM
+task="text-generation"
+model = AutoModelForCausalLM.from_pretrained("AdaptLLM/finance-chat")
+tokenizer = AutoTokenizer.from_pretrained("AdaptLLM/finance-chat")
+def finance(prompt):
+    our_system_prompt = "Please, check if the answer can be inferred from the pieces of context provided."
+    prompt = f"<s>[INST] <<SYS>>{our_system_prompt}<</SYS>>\n\n{our_system_prompt}\n{prompt} [/INST]"
+    inputs = tokenizer(prompt, return_tensors="pt", add_special_tokens=False).input_ids.to(model.device)
+    outputs = model.generate(input_ids=inputs, max_length=4096)[0]
+    answer_start = int(inputs.shape[-1])
+    pred = tokenizer.decode(outputs[answer_start:], skip_special_tokens=True)
+
+    
+    return pred
+prompt_input=input("enter the prompt")
+prediction=finance(prompt_input)
+print(f'### User Input:\n{prompt_input}\n\n### Assistant Output:\n{prediction}')
